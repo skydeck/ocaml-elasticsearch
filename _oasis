@@ -1,0 +1,14 @@
+OASISFormat: 0.3
+Name:        ocaml-elasticsearch
+Version:     0.1
+Synopsis:    Elasticsearch client for OCaml
+Authors:     Martin Jambon, Matthew Tovbin
+License:     BSD3
+Plugins:     META (0.3), DevFiles (0.3)
+BuildTools:  ocamlbuild
+
+Library "elasticsearch"
+  Path: src
+  Modules: Es_client, Es_query, Es_mapping
+  InternalModules: Es_untyped_json, Es_field_types_j, Es_field_types_v, Es_field_types_t, Es_client_j, Es_client_v, Es_client_t
+  BuildDepends: lwt, lwt.unix, lwt.syntax, netstring, batteries, utf8val, atdgen

@@ -1,0 +1,67 @@
+type utf8 = string <ocaml validator="\
+    fun path s ->
+      if Utf8val.is_allowed_unicode s then None
+      else
+        let msg =
+          Printf.sprintf \"Malformed UTF-8: %S\"
+            (if String.length s <= 100 then s
+             else String.sub s 0 100 ^ \" ...\")
+        in
+        Some (Ag_util.Validation.error ~msg path)">
+
+type base64 = string
+  <ocaml validator="\
+    fun path s ->
+      try ignore (Netencoding.Base64.decode s); None
+      with _ ->
+        let msg = Printf.sprintf \"Malformed base64 %S\" s in
+        Some (Ag_util.Validation.error ~msg path)">
+
+(** Type aliases and validators reflecting the index field types defined
+    in Es_mapping. *)
+
+type text = utf8
+type token = utf8
+type binary = base64
+type integer = int
+(*type float = float*)
+
+type byte = int
+  <ocaml validator="\
+     fun path x ->
+       if x >= 0 && x <= 255 then None
+       else
+         let msg = Printf.sprintf \"Not a byte: %i\" x in
+         Some (Ag_util.Validation.error ~msg path)">
+
+type boolean = bool
+type null = unit
+
+type coord = {
+  lat : float <ocaml validator="\
+      fun path x ->
+        if x >= -90. && x <= 90. then None
+        else
+          let msg =
+            Printf.sprintf \"Latitude out of range [-90, 90]: %g\" x
+          in
+          Some (Ag_util.Validation.error ~msg path)">;
+  lon : float <ocaml validator="
+      fun path x ->
+        if x >= -180. && x <= 180. then None
+        else
+          let msg =
+            Printf.sprintf \"Longitude out of range [-180, 180]: %g\" x
+          in
+          Some (Ag_util.Validation.error ~msg path)">;
+}
+
+type date = string
+  <ocaml validator="\
+    fun path s ->
+      try ignore (Netdate.parse s); None
+      with _ ->
+        let msg = Printf.sprintf \"Invalid date %S\" s in
+        Some (Ag_util.Validation.error ~msg path)">
+
+type 'a array = 'a list
