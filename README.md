@@ -21,7 +21,7 @@ $ make && make install
 ```
 
 Usage
--------
+------------
 
 Define a module by parameterizing Es_client with an HTTP client, connection configuration and index serialization settings:
 
@@ -98,6 +98,6 @@ ES_documents.search
 
 
 TODO
-----
+------------
 
 * Add full support for Elasticsearch API
