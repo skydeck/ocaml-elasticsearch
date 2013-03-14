@@ -11,4 +11,4 @@ Library "elasticsearch"
   Path: src
   Modules: Es_client, Es_query, Es_mapping
   InternalModules: Es_untyped_json, Es_field_types_j, Es_field_types_v, Es_field_types_t, Es_client_j, Es_client_v, Es_client_t
-  BuildDepends: lwt, lwt.unix, lwt.syntax, netstring, batteries, utf8val, atdgen
+  BuildDepends: netstring, batteries, atdgen, utf8val

@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: f0e7975bf677f6c934aa78d72968c852)
+# DO NOT EDIT (digest: 31c8e260b82a6d52e8c5c6f796b782d7)
 version = "0.1"
 description = "Elasticsearch client for OCaml"
-requires = "lwt lwt.unix lwt.syntax netstring batteries utf8val atdgen"
+requires = "netstring batteries atdgen utf8val"
 archive(byte) = "elasticsearch.cma"
 archive(byte, plugin) = "elasticsearch.cma"
 archive(native) = "elasticsearch.cmxa"
