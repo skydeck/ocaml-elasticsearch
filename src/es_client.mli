@@ -158,6 +158,12 @@ sig
          @param from offset from which results should be returned (default: 0)
          @param size maximum number of results to return (default: 10)
       *)
+  val count :
+    indexes: string list -> mappings: string list ->
+    ?qid: string ->
+    Es_query.query ->
+    item Es_client_t.hit search_result option computation
+
 end
 
 

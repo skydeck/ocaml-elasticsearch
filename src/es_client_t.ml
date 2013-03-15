@@ -45,7 +45,8 @@ type 'hit search_result = {
   sr_shards: shards option;
   sr_hits (*atd hits *): 'hit hits option;
   sr_error (*atd error *): string option;
-  sr_status (*atd status *): int option
+  sr_status (*atd status *): int option;
+  sr_count (*atd count *): int option
 }
 
 type 'item get_result = {

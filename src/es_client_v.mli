@@ -51,7 +51,8 @@ type 'hit search_result = 'hit Es_client_t.search_result = {
   sr_shards: shards option;
   sr_hits (*atd hits *): 'hit hits option;
   sr_error (*atd error *): string option;
-  sr_status (*atd status *): int option
+  sr_status (*atd status *): int option;
+  sr_count (*atd count *): int option
 }
 
 type 'item get_result = 'item Es_client_t.get_result = {
@@ -214,6 +215,7 @@ val create_search_result :
   ?sr_hits: 'hit hits ->
   ?sr_error: string ->
   ?sr_status: int ->
+  ?sr_count: int ->
   unit -> 'hit search_result
   (** Create a record of type {!search_result}. *)
 

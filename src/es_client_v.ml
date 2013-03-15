@@ -51,7 +51,8 @@ type 'hit search_result = 'hit Es_client_t.search_result = {
   sr_shards: shards option;
   sr_hits (*atd hits *): 'hit hits option;
   sr_error (*atd error *): string option;
-  sr_status (*atd status *): int option
+  sr_status (*atd status *): int option;
+  sr_count (*atd count *): int option
 }
 
 type 'item get_result = 'item Es_client_t.get_result = {
@@ -342,6 +343,7 @@ let create_search_result
   ?sr_hits
   ?sr_error
   ?sr_status
+  ?sr_count
   () =
   {
     sr_took = sr_took;
@@ -350,6 +352,7 @@ let create_search_result
     sr_hits = sr_hits;
     sr_error = sr_error;
     sr_status = sr_status;
+    sr_count = sr_count;
   }
 let create_get_result 
   ?gr_id

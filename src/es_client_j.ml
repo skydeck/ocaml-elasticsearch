@@ -51,7 +51,8 @@ type 'hit search_result = 'hit Es_client_t.search_result = {
   sr_shards: shards option;
   sr_hits (*atd hits *): 'hit hits option;
   sr_error (*atd error *): string option;
-  sr_status (*atd status *): int option
+  sr_status (*atd status *): int option;
+  sr_count (*atd count *): int option
 }
 
 type 'item get_result = 'item Es_client_t.get_result = {
@@ -2809,6 +2810,17 @@ let write_search_result write__hit = (
       )
         ob x;
     );
+    (match x.sr_count with None -> () | Some x ->
+      if !is_first then
+        is_first := false
+      else
+        Bi_outbuf.add_char ob ',';
+      Bi_outbuf.add_string ob "\"count\":";
+      (
+        Yojson.Safe.write_int
+      )
+        ob x;
+    );
     Bi_outbuf.add_char ob '}';
 )
 let string_of_search_result write__hit ?(len = 1024) x =
@@ -2826,7 +2838,8 @@ let read_search_result read__hit = (
         sr_shards = None;
         sr_hits = None;
         sr_error = None;
-        sr_status = (fun x -> x) (None);
+        sr_status = None;
+        sr_count = (fun x -> x) (None);
       }
     in
     try
@@ -2861,12 +2874,26 @@ let read_search_result read__hit = (
                     )
               )
             | 5 -> (
-                if String.unsafe_get s pos = 'e' && String.unsafe_get s (pos+1) = 'r' && String.unsafe_get s (pos+2) = 'r' && String.unsafe_get s (pos+3) = 'o' && String.unsafe_get s (pos+4) = 'r' then (
-                  4
-                )
-                else (
-                  -1
-                )
+                match String.unsafe_get s pos with
+                  | 'c' -> (
+                      if String.unsafe_get s (pos+1) = 'o' && String.unsafe_get s (pos+2) = 'u' && String.unsafe_get s (pos+3) = 'n' && String.unsafe_get s (pos+4) = 't' then (
+                        6
+                      )
+                      else (
+                        -1
+                      )
+                    )
+                  | 'e' -> (
+                      if String.unsafe_get s (pos+1) = 'r' && String.unsafe_get s (pos+2) = 'r' && String.unsafe_get s (pos+3) = 'o' && String.unsafe_get s (pos+4) = 'r' then (
+                        4
+                      )
+                      else (
+                        -1
+                      )
+                    )
+                  | _ -> (
+                      -1
+                    )
               )
             | 6 -> (
                 if String.unsafe_get s pos = 's' && String.unsafe_get s (pos+1) = 't' && String.unsafe_get s (pos+2) = 'a' && String.unsafe_get s (pos+3) = 't' && String.unsafe_get s (pos+4) = 'u' && String.unsafe_get s (pos+5) = 's' then (
@@ -2966,6 +2993,17 @@ let read_search_result read__hit = (
               in
               Obj.set_field (Obj.repr x) 5 (Obj.repr v);
             )
+          | 6 ->
+            if not (Yojson.Safe.read_null_if_possible p lb) then (
+              let v =
+                Some (
+                  (
+                    Ag_oj_run.read_int
+                  ) p lb
+                )
+              in
+              Obj.set_field (Obj.repr x) 6 (Obj.repr v);
+            )
           | _ -> (
               Yojson.Safe.skip_json p lb
             )
@@ -3002,12 +3040,26 @@ let read_search_result read__hit = (
                       )
                 )
               | 5 -> (
-                  if String.unsafe_get s pos = 'e' && String.unsafe_get s (pos+1) = 'r' && String.unsafe_get s (pos+2) = 'r' && String.unsafe_get s (pos+3) = 'o' && String.unsafe_get s (pos+4) = 'r' then (
-                    4
-                  )
-                  else (
-                    -1
-                  )
+                  match String.unsafe_get s pos with
+                    | 'c' -> (
+                        if String.unsafe_get s (pos+1) = 'o' && String.unsafe_get s (pos+2) = 'u' && String.unsafe_get s (pos+3) = 'n' && String.unsafe_get s (pos+4) = 't' then (
+                          6
+                        )
+                        else (
+                          -1
+                        )
+                      )
+                    | 'e' -> (
+                        if String.unsafe_get s (pos+1) = 'r' && String.unsafe_get s (pos+2) = 'r' && String.unsafe_get s (pos+3) = 'o' && String.unsafe_get s (pos+4) = 'r' then (
+                          4
+                        )
+                        else (
+                          -1
+                        )
+                      )
+                    | _ -> (
+                        -1
+                      )
                 )
               | 6 -> (
                   if String.unsafe_get s pos = 's' && String.unsafe_get s (pos+1) = 't' && String.unsafe_get s (pos+2) = 'a' && String.unsafe_get s (pos+3) = 't' && String.unsafe_get s (pos+4) = 'u' && String.unsafe_get s (pos+5) = 's' then (
@@ -3106,6 +3158,17 @@ let read_search_result read__hit = (
                   )
                 in
                 Obj.set_field (Obj.repr x) 5 (Obj.repr v);
+              )
+            | 6 ->
+              if not (Yojson.Safe.read_null_if_possible p lb) then (
+                let v =
+                  Some (
+                    (
+                      Ag_oj_run.read_int
+                    ) p lb
+                  )
+                in
+                Obj.set_field (Obj.repr x) 6 (Obj.repr v);
               )
             | _ -> (
                 Yojson.Safe.skip_json p lb

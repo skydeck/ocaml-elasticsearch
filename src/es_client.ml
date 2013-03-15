@@ -124,6 +124,13 @@ sig
     ?sort: (string * sort_order) list list ->
     Es_query.query ->
     item Es_client_t.hit search_result option computation
+
+  val count :
+    indexes: string list -> mappings: string list ->
+    ?qid: string ->
+    Es_query.query ->
+    item Es_client_t.hit search_result option computation
+
 end
 
 
@@ -398,4 +405,16 @@ struct
         return (Some (Es_client_j.search_result_of_string decode_hit res))
       | None ->
         return None
+
+  let count ~indexes ~mappings ?qid query =
+    let query = Es_query.to_json_ast ~cst_score:false query in
+    let body = Yojson.Basic.to_string query in
+    let uri = make_mapping_uri ?qid ~indexes ~mappings "_count" in
+    Http_client.post uri ~body
+    >>= function
+      | Some (status, headers, res)->
+        return (Some (Es_client_j.search_result_of_string decode_hit res))
+      | None ->
+        return None
+
 end
