@@ -11,8 +11,10 @@ type field_type =
             It must be UTF8-compatible because of JSON limitations.
             Use Binary and base64 encoding for non-UTF8 data. *)
 | Binary (** base64-encoded arbitrary data *)
-| Integer (** age, number of cats, etc. for range queries *)
-| Float
+| Integer (** 32-bit signed integer *)
+| Long (** default integer type (64-bit signed) *)
+| Float (** 32-bit IEEE 754 *)
+| Double (** default floating-point type (64-bit IEEE 754) *)
 | Byte (** possibly more efficient than Integer *)
 | Boolean (** true or false *)
 | Null (** null value, i.e. the field is a simple flag *)
