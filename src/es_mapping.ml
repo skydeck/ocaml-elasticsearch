@@ -3,7 +3,9 @@ type field_type =
 | Token
 | Binary
 | Integer
+| Long
 | Float
+| Double
 | Byte
 | Boolean
 | Null
@@ -78,7 +80,9 @@ and json_of_field_type indexed t =
         [ type_ "string" ] @ idx
     | Binary -> [ type_ "binary" ] @ idx
     | Integer -> [ type_ "integer" ] @ idx
+    | Long -> [ type_ "long" ] @ idx
     | Float -> [ type_ "float" ] @ idx
+    | Double -> [ type_ "double" ] @ idx
     | Byte -> [ type_ "byte" ] @ idx
     | Boolean -> [ type_ "boolean" ] @ idx
     | Null -> [ type_ "null" ] @ idx
