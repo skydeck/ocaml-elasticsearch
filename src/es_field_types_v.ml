@@ -38,7 +38,7 @@ let validate_utf8 = (
 )
 let validate_base64 = (
   fun path s ->
-      try ignore (Netencoding.Base64.decode s); None
+      try ignore (Nlencoding.Base64.decode s); None
       with _ ->
         let msg = Printf.sprintf "Malformed base64 %S" s in
         Some (Ag_util.Validation.error ~msg path)
@@ -96,7 +96,7 @@ let validate_coord = (
 )
 let validate_date = (
   fun path s ->
-      try ignore (Netdate.parse s); None
+      try ignore (Nldate.parse s); None
       with _ ->
         let msg = Printf.sprintf "Invalid date %S" s in
         Some (Ag_util.Validation.error ~msg path)

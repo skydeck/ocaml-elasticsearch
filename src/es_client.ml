@@ -154,7 +154,7 @@ struct
     Item.write ob x;
     Bi_outbuf.contents ob
 
-  let url_escape = Netencoding.Url.encode
+  let url_escape = Nlencoding.Url.encode
 
   let url_escape_list l =
     String.concat "," (List.map url_escape l)

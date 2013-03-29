@@ -10,4 +10,4 @@ BuildTools:  ocamlbuild
 Library "elasticsearch"
   Path: src
   Modules: Es_client, Es_query, Es_mapping, Es_untyped_json, Es_field_types_j, Es_field_types_v, Es_field_types_t, Es_client_j, Es_client_v, Es_client_t
-  BuildDepends: netstring, batteries, atdgen, utf8val
+  BuildDepends: netstring-light, batteries, atdgen, utf8val

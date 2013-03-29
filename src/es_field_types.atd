@@ -12,7 +12,7 @@ type utf8 = string <ocaml validator="\
 type base64 = string
   <ocaml validator="\
     fun path s ->
-      try ignore (Netencoding.Base64.decode s); None
+      try ignore (Nlencoding.Base64.decode s); None
       with _ ->
         let msg = Printf.sprintf \"Malformed base64 %S\" s in
         Some (Ag_util.Validation.error ~msg path)">
@@ -59,7 +59,7 @@ type coord = {
 type date = string
   <ocaml validator="\
     fun path s ->
-      try ignore (Netdate.parse s); None
+      try ignore (Nldate.parse s); None
       with _ ->
         let msg = Printf.sprintf \"Invalid date %S\" s in
         Some (Ag_util.Validation.error ~msg path)">
