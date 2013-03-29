@@ -8,7 +8,7 @@ Plugins:     META (0.3), DevFiles (0.3)
 BuildTools:  ocamlbuild
 
 PreBuildCommand: atdgen src/es_client.atd -j -j-std; atdgen src/es_client.atd -t; atdgen src/es_client.atd -v; atdgen src/es_field_types.atd -j -j-std; atdgen src/es_field_types.atd -t; atdgen src/es_field_types.atd -v
-PostCleanCommand: rm src/{es_client,es_field_types}_{j,t,v}.*
+PostCleanCommand: rm -f src/{es_client,es_field_types}_{j,t,v}.*
 
 Library "elasticsearch"
   Path: src
