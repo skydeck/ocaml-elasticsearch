@@ -7,9 +7,9 @@ Elasticsearch client for OCaml
 Requirements
 ------------
 
-- `netstring`
 - `batteries`
 - `atdgen`
+- `netstring-light` (Available here: `https://github.com/mrnumber/netstring-light`)
 - `utf8val` (Available here: `https://github.com/mrnumber/utf8val`)
 
 

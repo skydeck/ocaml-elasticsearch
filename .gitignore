@@ -1,3 +1,5 @@
 _build
 setup.log
 setup.data
+src/es_client_*.*
+src/es_field_types_*.*
