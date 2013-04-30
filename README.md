@@ -9,8 +9,8 @@ Requirements
 
 - `batteries`
 - `atdgen`
-- `netstring-light` (Available here: `https://github.com/mrnumber/netstring-light`)
-- `utf8val` (Available here: `https://github.com/mrnumber/utf8val`)
+- `netstring-light` (Available here: `https://github.com/skydeck/netstring-light`)
+- `utf8val` (Available here: `https://github.com/skydeck/utf8val`)
 
 
 Installation
