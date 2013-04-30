@@ -7,10 +7,10 @@ Elasticsearch client for OCaml
 Requirements
 ------------
 
-- `batteries`
-- `atdgen`
-- `netstring-light` (Available here: `https://github.com/skydeck/netstring-light`)
-- `utf8val` (Available here: `https://github.com/skydeck/utf8val`)
+- `batteries` @ `https://github.com/ocaml-batteries-team/batteries-included`
+- `atdgen` @ `https://github.com/mjambon/atdgen`
+- `netstring-light` @ `https://github.com/skydeck/netstring-light`
+- `utf8val` @ `https://github.com/skydeck/utf8val`
 
 
 Installation
