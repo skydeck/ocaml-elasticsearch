@@ -3,7 +3,7 @@ Name:        ocaml-elasticsearch
 Version:     0.1
 Synopsis:    Elasticsearch client for OCaml
 Authors:     Martin Jambon, Matthew Tovbin
-License:     BSD3
+License:     FreeBSD
 Plugins:     META (0.3), DevFiles (0.3)
 BuildTools:  ocamlbuild
 
