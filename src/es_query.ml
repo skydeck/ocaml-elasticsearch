@@ -51,6 +51,7 @@ and filter =
   | Term_filter of field_name * string
   | Geo_distance_filter of field_name * coord * radius_km
   | Numeric_range_filter of field_name * int option * int option
+  | Float_range_filter of field_name * float option * float option
   | And_filter of filter list
   | Or_filter of filter list
   | Not_filter of filter
@@ -84,6 +85,27 @@ let create_bool_query
     ?(disable_coord = false)
     () =
   { must; should; must_not; minimum_number_should_match; disable_coord }
+
+let json_of_numeric_range name opt_mini opt_maxi json_of_num =
+  let l =
+    match opt_mini, opt_maxi with
+        None, None -> []
+      | Some mini, None -> [ "gte", json_of_num mini ]
+      | None, Some maxi -> [ "lte", json_of_num maxi ]
+      | Some mini, Some maxi ->
+          [
+            "from", json_of_num mini;
+            "to", json_of_num maxi;
+            "include_lower", `Bool true;
+            "include_upper", `Bool true;
+          ]
+  in
+  `Assoc [
+    "numeric_range", `Assoc [
+      name, `Assoc l
+    ]
+  ]
+
 
 let rec to_json_ast ~cst_score = function
   | Match_all -> `Assoc [ "match_all", `Assoc [] ]
@@ -266,24 +288,9 @@ and json_of_filter = function
       ]
 
   | Numeric_range_filter (name, opt_mini, opt_maxi) ->
-      let l =
-        match opt_mini, opt_maxi with
-            None, None -> []
-          | Some mini, None -> [ "gte", `Int mini ]
-          | None, Some maxi -> [ "lte", `Int maxi ]
-          | Some mini, Some maxi ->
-              [
-                "from", `Int mini;
-                "to", `Int maxi;
-                "include_lower", `Bool true;
-                "include_upper", `Bool true;
-              ]
-      in
-      `Assoc [
-        "numeric_range", `Assoc [
-          name, `Assoc l
-        ]
-      ]
+      json_of_numeric_range name opt_mini opt_maxi (fun x -> `Int x)
+  | Float_range_filter (name, opt_mini, opt_maxi) ->
+      json_of_numeric_range name opt_mini opt_maxi (fun x -> `Float x)
 
   | And_filter l ->
       `Assoc [
