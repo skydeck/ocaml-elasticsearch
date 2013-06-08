@@ -60,59 +60,54 @@ sig
   type item
   type doc_id = string
 
-  val index_exists : string -> bool option computation
+  val index_exists : string -> bool computation
 
   val create_index :
     ?shards: int ->
     ?replicas: int ->
     string -> Es_mapping.doc_mapping list ->
-    simplified_result option computation
+    unit computation
 
   val create_or_update_index :
     ?shards:int ->
     ?replicas:int ->
-    string -> Es_mapping.doc_mapping list -> bool computation
+    string -> Es_mapping.doc_mapping list -> unit computation
 
-  val delete_index :
-    string -> simplified_result option computation
+  val delete_index : string -> unit computation
 
   val put_mapping :
     index: string -> Es_mapping.doc_mapping ->
-    simplified_result option computation
+    unit computation
 
   val put_mappings :
     index: string -> Es_mapping.doc_mapping list ->
-    bool computation
+    unit computation
 
   val get_mapping :
     index: string -> string ->
-    string option computation
+    unit computation
 
   val get_item :
     index: string -> mapping: string -> doc_id ->
-    item get_result option computation
+    item option computation
 
   val get_items :
-    index: string -> mapping: string -> get_request_key list ->
-    item get_results option computation
-
-  val get_items_simple :
     index: string -> mapping: string -> get_request_key list ->
     item list computation
 
   val index_item :
     ?parent_id: doc_id ->
     index: string -> mapping: string -> id: doc_id -> item: item -> unit ->
-    index_result option computation
+    unit computation
 
   val update_item :
     ?parent_id: doc_id ->
     index: string -> mapping: string -> id: doc_id -> item: item -> unit ->
-    update_result option computation
+    unit computation
 
   val delete_item :
     index: string -> mapping: string -> id: doc_id ->
-    delete_result option computation
+    unit computation
 
   val all_indexes : string list
   val all_mappings : string list
@@ -123,14 +118,13 @@ sig
     ?qid: string -> ?from: int -> ?size: int ->
     ?sort: (string * sort_order) list list ->
     Es_query.query ->
-    item Es_client_t.hit search_result option computation
+    item search_result computation
 
   val count :
     indexes: string list -> mappings: string list ->
     ?qid: string ->
     Es_query.query ->
-    item Es_client_t.hit search_result option computation
-
+    int computation
 end
 
 

@@ -71,73 +71,75 @@ sig
   type item
   type doc_id = string
 
-  val index_exists : string -> bool option computation
+  val index_exists : string -> bool computation
     (** Check whether an index exists. *)
 
   val create_index :
     ?shards: int ->
     ?replicas: int ->
     string -> Es_mapping.doc_mapping list ->
-    simplified_result option computation
+    unit computation
+    (** Create an index with mapping definitions (exactly one mapping
+        is recommended). *)
+
+  val create_index :
+    ?shards: int ->
+    ?replicas: int ->
+    string -> Es_mapping.doc_mapping list ->
+    unit computation
     (** Create an index with mapping definitions (exactly one mapping
         is recommended). *)
 
   val create_or_update_index :
     ?shards:int ->
     ?replicas:int ->
-    string -> Es_mapping.doc_mapping list -> bool computation
+    string -> Es_mapping.doc_mapping list -> unit computation
     (** Create an index if it doesn't exist. Add or replace the given
         mappings.
         The [shards] and [replicas] parameters are ignored if the
         index already exists. *)
 
-  val delete_index :
-    string -> simplified_result option computation
+  val delete_index : string -> unit computation
 
   val put_mapping :
     index: string -> Es_mapping.doc_mapping ->
-    simplified_result option computation
+    unit computation
     (** Add or extend an existing mapping.
         Make sure you don't introduce conflicts. *)
 
   val put_mappings :
     index: string -> Es_mapping.doc_mapping list ->
-    bool computation
+    unit computation
     (** Same as [put_mapping] but puts multiple mappings.
         Returns true iff completely successful. *)
 
   val get_mapping :
     index: string -> string ->
-    string option computation
+    unit computation
     (** Get a mapping as a JSON blob, for debugging purposes. *)
 
   val get_item :
     index: string -> mapping: string -> doc_id ->
-    item get_result option computation
+    item option computation
 
   val get_items :
     index: string -> mapping: string -> get_request_key list ->
-    item get_results option computation
-
-  val get_items_simple :
-    index: string -> mapping: string -> get_request_key list ->
     item list computation
-      (** returns items that are available; raises an exception
-          if the call fails. *)
+      (** returns items that are available *)
 
   val index_item :
     ?parent_id: doc_id ->
     index: string -> mapping: string -> id: doc_id -> item: item -> unit ->
-    index_result option computation
+    unit computation
 
   val update_item :
     ?parent_id: doc_id ->
     index: string -> mapping: string -> id: doc_id -> item: item -> unit ->
-    update_result option computation
+    unit computation
 
   val delete_item :
     index: string -> mapping: string -> id: doc_id ->
-    delete_result option computation
+    unit computation
 
   val all_indexes : string list
   val all_mappings : string list
@@ -148,7 +150,7 @@ sig
     ?qid: string -> ?from: int -> ?size: int ->
     ?sort: (string * sort_order) list list ->
     Es_query.query ->
-    item Es_client_t.hit search_result option computation
+    item search_result computation
       (**
          Perform a search query and return a slice of the results.
 
@@ -162,7 +164,7 @@ sig
     indexes: string list -> mappings: string list ->
     ?qid: string ->
     Es_query.query ->
-    item Es_client_t.hit search_result option computation
+    int computation
 
 end
 
