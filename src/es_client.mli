@@ -115,7 +115,7 @@ sig
 
   val get_mapping :
     index: string -> string ->
-    unit computation
+    string computation
     (** Get a mapping as a JSON blob, for debugging purposes. *)
 
   val get_item :
@@ -150,7 +150,7 @@ sig
     ?qid: string -> ?from: int -> ?size: int ->
     ?sort: (string * sort_order) list list ->
     Es_query.query ->
-    item search_result computation
+    item hit search_result computation
       (**
          Perform a search query and return a slice of the results.
 

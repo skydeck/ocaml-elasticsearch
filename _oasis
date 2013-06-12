@@ -12,5 +12,5 @@ PostCleanCommand: rm -f src/{es_client,es_field_types}_{j,t,v}.*
 
 Library "elasticsearch"
   Path: src
-  Modules: Es_client, Es_query, Es_mapping, Es_untyped_json, Es_field_types_j, Es_field_types_v, Es_field_types_t, Es_client_j, Es_client_v, Es_client_t
-  BuildDepends: netstring-light, batteries, atdgen, utf8val
+  Modules: Es_client, Es_query, Es_mapping, Es_untyped_json, Es_field_types_j, Es_field_types_v, Es_field_types_t, Es_client_j, Es_client_v, Es_client_t, Es_error
+  BuildDepends: netstring-light, atdgen, utf8val
