@@ -95,20 +95,6 @@ type 'hit search_result = {
 } <ocaml field_prefix="sr_">
 
 
-(*
-type 'item get_result = {
-  ?gr_id <json name="_id"> : string option;
-  ?gr_index <json name="_index"> : string option;
-  ?gr_type <json name="_type"> : string option;
-  ?gr_version <json name="_version"> : int option;
-  ?exists <ocaml name="gr_exists"> : bool option;
-  ?gr_item <json name="_source"> : 'item option;
-  ?error <ocaml name="gr_error"> : string option;
-  ?status <ocaml name="gr_status"> : int option
-}
-*)
-
-
 (*** Retrieving documents of known ID (get, mget) ***)
 
 type get_request_key = {
@@ -130,46 +116,9 @@ type 'item get_result = {
   ?_source <ocaml name="gr_source"> : 'item option;
 } <ocaml field_prefix="gr_">
 
-(*
-type delete_result = {
-  ?dr_id <json name="_id"> : string option;
-  ?dr_index <json name="_index"> : string option;
-  ?dr_type <json name="_type"> : string option;
-  ?dr_version <json name="_version"> : int option;
-  ?found <ocaml name="dr_found"> : bool option;
-  ?ok <ocaml name="dr_ok"> : bool option;
-  ?error <ocaml name="dr_error"> : string option;
-  ?status <ocaml name="dr_status"> : int option
-}
-*)
-
-(*
-type index_result = {
-  ?ir_id <json name="_id"> : string option;
-  ?ir_index <json name="_index"> : string option;
-  ?ir_type <json name="_type"> : string option;
-  ?ir_version <json name="_version"> : int option;
-  ?ok <ocaml name="ir_ok"> : bool option;
-  ?error <ocaml name="ir_error"> : string option;
-  ?status <ocaml name="ir_status"> : int option
-}
-*)
-
 type 'item update_request = {
   _doc : 'item
 } <ocaml field_prefix="ur">
-
-(*
-type update_result = {
-  ?ur_id <json name="_id"> : string option;
-  ?ur_index <json name="_index"> : string option;
-  ?ur_type <json name="_type"> : string option;
-  ?ur_version <json name="_version"> : int option;
-  ?ok <ocaml name="ur_ok"> : bool option;
-  ?error <ocaml name="ur_error"> : string option;
-  ?status <ocaml name="ur_status"> : int option
-}
-*)
 
 (*** Generic response type ***)
 
@@ -183,3 +132,12 @@ type generic_result = {
   ?error : string option;
   ?status : int option;
 }
+
+
+(*** Error printing ***)
+
+type http_resp_record = {
+  status : int;
+  headers : (string * string) list <json repr="object">;
+  body : string;
+} <ocaml field_prefix="hr_">

@@ -183,15 +183,15 @@ struct
 
   (* take an http response and raise the most informative exception possible *)
   let raise_error = function
-    | None -> raise Es_error.Http_failure
+    | None -> raise Es_error.(Error Http_failure)
     | Some ((status, headers, body) as http_resp) ->
         let generic_result =
           try Some (Es_client_j.generic_result_of_string body)
           with _ -> None
         in
         match generic_result with
-            None -> raise (Es_error.Http_error http_resp)
-          | Some x -> raise (Es_error.Elasticsearch_error x)
+            None -> raise Es_error.(Error (Http_error http_resp))
+          | Some x -> raise Es_error.(Error (Elasticsearch_error x))
 
   let is_acceptable_status accepted_statuses n =
     (n >= 200 && n < 300) || List.mem n accepted_statuses
@@ -202,7 +202,7 @@ struct
 
   let read_body converter ((_, _, body) as http_resp) =
     try converter body
-    with _ -> raise (Es_error.Http_error http_resp)
+    with _ -> raise Es_error.(Error (Http_error http_resp))
 
   (*
     Take an optional http response, then
@@ -218,15 +218,15 @@ struct
           with _ -> None
         in
         (match generic_result with
-            None -> raise (Es_error.Http_error http_resp)
+            None -> raise Es_error.(Error (Http_error http_resp))
           | Some x ->
               if has_error accept status x then
-                raise (Es_error.Elasticsearch_error x)
+                raise Es_error.(Error (Elasticsearch_error x))
               else
                 return http_resp
         )
     | None ->
-        raise Es_error.Http_failure
+        raise Es_error.(Error Http_failure)
 
   (* handle the response for an operation that returns nothing
      (e.g. index a document, delete something, etc.)
@@ -369,7 +369,7 @@ struct
     let uri =
       make_mapping_uri ~indexes: [index] ~mappings: [mapping] id in
     Http_client.delete uri >>= fun opt_resp ->
-    handle_generic_result opt_resp
+    handle_generic_result ~accept:[404] opt_resp
 
   let all_indexes = ["*"]
   let all_mappings = ["*"]
@@ -383,20 +383,27 @@ struct
               (match List.assoc "_type" l with
                   `String s -> s
                 | _ ->
-                    raise (Es_error.Data_error
-                             "Es_client.decode_hit: malformed _type"))
+                    raise Es_error.(
+                      Error (Data_error
+                               "Es_client.decode_hit: malformed _type")
+                    )
+              )
             with Not_found ->
-              raise (Es_error.Data_error "Es_client.decode_hit: missing _type")
+              raise Es_error.(
+                Error (Data_error "Es_client.decode_hit: missing _type")
+              )
           in
           let json_string = Yojson.Basic.to_string ast in
           (try
              Es_client_j.hit_of_string (Item.read ~doc_type) json_string
            with e ->
              let s = Printexc.to_string e in
-             raise (Es_error.Data_error ("Es_client.decode_hit: " ^ s))
+             raise Es_error.(Error (Data_error ("Es_client.decode_hit: " ^ s)))
           )
       | _ ->
-          raise (Es_error.Data_error "Es_client.decode_hit: not an object")
+          raise Es_error.(
+            Error (Data_error "Es_client.decode_hit: not an object")
+          )
 
   let default_sort = [ "_score", { order = `Desc; ignore_unmapped = None } ]
 
