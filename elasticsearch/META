@@ -1,4 +1,5 @@
 name = "elasticsearch"
+version = "0.2.0"
 description = "Elasticsearch client for OCaml"
 requires = "netstring-light utf8val atdgen"
 archive(byte) = "elasticsearch.cma"
