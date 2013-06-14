@@ -60,59 +60,54 @@ sig
   type item
   type doc_id = string
 
-  val index_exists : string -> bool option computation
+  val index_exists : string -> bool computation
 
   val create_index :
     ?shards: int ->
     ?replicas: int ->
     string -> Es_mapping.doc_mapping list ->
-    simplified_result option computation
+    unit computation
 
   val create_or_update_index :
     ?shards:int ->
     ?replicas:int ->
-    string -> Es_mapping.doc_mapping list -> bool computation
+    string -> Es_mapping.doc_mapping list -> unit computation
 
-  val delete_index :
-    string -> simplified_result option computation
+  val delete_index : string -> unit computation
 
   val put_mapping :
     index: string -> Es_mapping.doc_mapping ->
-    simplified_result option computation
+    unit computation
 
   val put_mappings :
     index: string -> Es_mapping.doc_mapping list ->
-    bool computation
+    unit computation
 
   val get_mapping :
     index: string -> string ->
-    string option computation
+    string computation
 
   val get_item :
     index: string -> mapping: string -> doc_id ->
-    item get_result option computation
+    item option computation
 
   val get_items :
-    index: string -> mapping: string -> get_request_key list ->
-    item get_results option computation
-
-  val get_items_simple :
     index: string -> mapping: string -> get_request_key list ->
     item list computation
 
   val index_item :
     ?parent_id: doc_id ->
     index: string -> mapping: string -> id: doc_id -> item: item -> unit ->
-    index_result option computation
+    unit computation
 
   val update_item :
     ?parent_id: doc_id ->
     index: string -> mapping: string -> id: doc_id -> item: item -> unit ->
-    update_result option computation
+    unit computation
 
   val delete_item :
     index: string -> mapping: string -> id: doc_id ->
-    delete_result option computation
+    unit computation
 
   val all_indexes : string list
   val all_mappings : string list
@@ -123,14 +118,13 @@ sig
     ?qid: string -> ?from: int -> ?size: int ->
     ?sort: (string * sort_order) list list ->
     Es_query.query ->
-    item Es_client_t.hit search_result option computation
+    item hit search_result computation
 
   val count :
     indexes: string list -> mappings: string list ->
     ?qid: string ->
     Es_query.query ->
-    item Es_client_t.hit search_result option computation
-
+    int computation
 end
 
 
@@ -187,28 +181,68 @@ struct
       (url_escape_list indexes) (url_escape_list mappings) path
       opt_query
 
-  let handle_simplified_result = function
-    | Some (status, headers, res) ->
-        return
-          (Some (Es_client_j.simplified_result_of_string res))
-    | None ->
-        return None
+  (* take an http response and raise the most informative exception possible *)
+  let raise_error = function
+    | None -> raise Es_error.(Error Http_failure)
+    | Some ((status, headers, body) as http_resp) ->
+        let generic_result =
+          try Some (Es_client_j.generic_result_of_string body)
+          with _ -> None
+        in
+        match generic_result with
+            None -> raise Es_error.(Error (Http_error http_resp))
+          | Some x -> raise Es_error.(Error (Elasticsearch_error x))
 
-  let handle_string = function
-    | Some (status, headers, res) ->
-        return (Some res)
+  let is_acceptable_status accepted_statuses n =
+    (n >= 200 && n < 300) || List.mem n accepted_statuses
+
+  let has_error accepted_statuses status gen_resp =
+    gen_resp.error <> None
+    || not (is_acceptable_status accepted_statuses status)
+
+  let read_body converter ((_, _, body) as http_resp) =
+    try converter body
+    with _ -> raise Es_error.(Error (Http_error http_resp))
+
+  (*
+    Take an optional http response, then
+    raise the most informative exception possible if there's a problem,
+    or return the http response.
+    accept is a list of response status codes tolerated in
+    addition to the 2xx range, such as 404 (not found).
+  *)
+  let check_generic_result ?(accept = []) = function
+    | Some ((status, headers, body) as http_resp) ->
+        let generic_result =
+          try Some (Es_client_j.generic_result_of_string body)
+          with _ -> None
+        in
+        (match generic_result with
+            None -> raise Es_error.(Error (Http_error http_resp))
+          | Some x ->
+              if has_error accept status x then
+                raise Es_error.(Error (Elasticsearch_error x))
+              else
+                return http_resp
+        )
     | None ->
-        return None
+        raise Es_error.(Error Http_failure)
+
+  (* handle the response for an operation that returns nothing
+     (e.g. index a document, delete something, etc.)
+  *)
+  let handle_generic_result ?accept opt_http_resp =
+    check_generic_result ?accept opt_http_resp >>= fun http_resp ->
+    return ()
 
   let index_exists index =
     let uri = make_index_uri ~indexes:[index] "" in
     Http_client.head uri >>= fun res ->
     return (
       match res with
-        | None -> None
-        | Some (200, _, _) -> Some true
-        | Some (404, _, _) -> Some false
-        | _ -> None
+        | Some (200, _, _) -> true
+        | Some (404, _, _) -> false
+        | x -> raise_error x
     )
 
   let create_index ?shards ?replicas index mappings =
@@ -226,8 +260,8 @@ struct
         mappings = json_mappings;
       }
     in
-    Http_client.put ~body uri
-    >>= handle_simplified_result
+    Http_client.put ~body uri >>= fun opt_resp ->
+    handle_generic_result opt_resp
 
   let put_mapping ~index mapping =
     let uri =
@@ -237,35 +271,21 @@ struct
         "_mapping"
     in
     let body = Es_mapping.to_json ~pretty:false mapping in
-    Http_client.put ~body uri
-    >>= handle_simplified_result
+    Http_client.put ~body uri >>= fun opt_resp ->
+    handle_generic_result opt_resp
 
-
-  let is_ok x =
-    match x.error with
-        None -> true
-      | Some _ -> false
+  let rec list_iter f = function
+    | [] -> return ()
+    | x :: l ->
+        f x >>= fun () -> list_iter f l
 
   let put_mappings ~index mappings =
-    List.fold_left (
-      fun acc mapping ->
-        acc >>= function
-          | false -> return false
-          | true ->
-              put_mapping ~index mapping >>= function
-                | None -> return false
-                | Some x -> return (is_ok x)
-    ) (return true) mappings
+    list_iter (put_mapping ~index) mappings
 
   let create_or_update_index ?shards ?replicas index mappings =
     index_exists index >>= function
-      | None -> return false
-      | Some true -> put_mappings ~index mappings
-      | Some false ->
-          (create_index ?shards ?replicas index mappings >>= function
-            | None -> return false
-            | Some x -> return (is_ok x)
-          )
+      | true -> put_mappings ~index mappings
+      | false -> create_index ?shards ?replicas index mappings
 
   let get_mapping ~index mapping =
     let uri =
@@ -274,78 +294,66 @@ struct
         ~mappings: [mapping]
         "_mapping"
     in
-    Http_client.get uri
-    >>= handle_string
+    Http_client.get uri >>= fun opt_resp ->
+    check_generic_result opt_resp >>= fun (_, _, body) ->
+    return body
 
   let delete_index index =
     let uri = make_index_uri ~indexes: [index] "" in
-    Http_client.delete uri
-    >>= handle_simplified_result
+    Http_client.delete uri >>= fun opt_resp ->
+    handle_generic_result opt_resp
 
   let get_item ~index ~mapping id =
     let uri =
       make_mapping_uri ~indexes: [index] ~mappings: [mapping] id in
-    Http_client.get uri
-    >>= function
-      | Some (status,hdrs,res) ->
-          let x =
-            Es_client_j.get_result_of_string (Item.read ~doc_type:mapping) res
+    Http_client.get uri >>= fun opt_resp ->
+    check_generic_result ~accept:[404] opt_resp >>= fun http_resp ->
+    let conv =
+      Es_client_j.get_result_of_string (Item.read ~doc_type:mapping)
+    in
+    let x = read_body conv http_resp in
+    if x.gr_exists then
+      return x.gr_source
+    else
+      return None
+
+  let filter_map f l =
+    let rec aux f acc = function
+      | [] -> List.rev acc
+      | x :: l ->
+          let acc =
+            match f x with
+                None -> acc
+              | Some y -> y :: acc
           in
-        return (Some x)
-      | None ->
-        return None
+          aux f acc l
+    in
+    aux f [] l
 
   let get_items ~index ~mapping keys =
     if keys = [] then
-      return (Some {
-        grs_docs = Some [];
-        grs_error = None;
-        grs_status = None;
-      })
+      return []
     else
       let uri =
         make_mapping_uri ~indexes: [index] ~mappings: [mapping] "_mget"
       in
       let body = Es_client_j.string_of_get_request { grq_docs = keys } in
-      Http_client.post ~body uri >>= function
-        | Some (status,hdrs,res) ->
-            let results =
-              Es_client_j.get_results_of_string
-                (Item.read ~doc_type:mapping) res
-            in
-            return (Some results)
-        | None ->
-            return None
-
-  let get_items_simple ~index ~mapping keys =
-    let error s =
-      let msg = sprintf "Es_client.get_items_simple: %s" s in
-      failwith msg
-    in
-    get_items ~index ~mapping keys  >>= function
-      | None -> error "TCP Error"
-      | Some x ->
-          match x.grs_error with
-            | Some s -> error (sprintf "elasticsearch error: %s" s)
-            | None ->
-                match x.grs_status with
-                  | Some n when n <> 200 ->
-                      error (sprintf "elasticsearch error status %i" n)
-                  | _ ->
-                      let profiles =
-                        match x.grs_docs with Some p -> p | _ -> [] in
-                      return (BatList.filter_map (fun p -> p.gr_item) profiles)
+      Http_client.post ~body uri >>= fun opt_resp ->
+      check_generic_result opt_resp >>= fun http_resp ->
+      let conv =
+        Es_client_j.get_results_of_string (Item.read ~doc_type:mapping)
+      in
+      let results = read_body conv http_resp in
+      let docs = filter_map (fun x -> x.gr_source) results.grs_docs in
+      return docs
 
   let index_item ?parent_id ~index ~mapping ~id ~item () =
     let uri =
       make_mapping_uri ?parent_id
         ~indexes: [index] ~mappings: [mapping] id in
     let item_str = string_of_item item in
-    Http_client.post ~body:item_str uri
-    >>= function
-      | Some (status,hdrs,res)->
-        return (Some (Es_client_j.index_result_of_string res))
-      | None -> return None
+    Http_client.post ~body:item_str uri >>= fun opt_resp ->
+    handle_generic_result opt_resp
 
   let update_item ?parent_id ~index ~mapping ~id ~item () =
     let uri =
@@ -354,20 +362,14 @@ struct
     let body =
       Es_client_j.string_of_update_request Item.write { ur_doc = item }
     in
-    Http_client.post ~body uri
-    >>= function
-      | Some (status,hdrs,res)->
-        return (Some (Es_client_j.update_result_of_string res))
-      | None -> return None
+    Http_client.post ~body uri >>= fun opt_resp ->
+    handle_generic_result opt_resp
 
   let delete_item ~index ~mapping ~id =
     let uri =
       make_mapping_uri ~indexes: [index] ~mappings: [mapping] id in
-    Http_client.delete uri
-    >>= function
-      | Some (status,hdrs,res)->
-        return (Some (Es_client_j.delete_result_of_string res))
-      | None -> return None
+    Http_client.delete uri >>= fun opt_resp ->
+    handle_generic_result ~accept:[404] opt_resp
 
   let all_indexes = ["*"]
   let all_mappings = ["*"]
@@ -381,13 +383,27 @@ struct
               (match List.assoc "_type" l with
                   `String s -> s
                 | _ ->
-                    failwith "Es_client.decode_hit: malformed _type")
-            with Not_found -> failwith "Es_client.decode_hit: missing _type"
+                    raise Es_error.(
+                      Error (Data_error
+                               "Es_client.decode_hit: malformed _type")
+                    )
+              )
+            with Not_found ->
+              raise Es_error.(
+                Error (Data_error "Es_client.decode_hit: missing _type")
+              )
           in
           let json_string = Yojson.Basic.to_string ast in
-          Es_client_j.hit_of_string (Item.read ~doc_type) json_string
+          (try
+             Es_client_j.hit_of_string (Item.read ~doc_type) json_string
+           with e ->
+             let s = Printexc.to_string e in
+             raise Es_error.(Error (Data_error ("Es_client.decode_hit: " ^ s)))
+          )
       | _ ->
-          failwith "Es_client.decode_hit: not an object"
+          raise Es_error.(
+            Error (Data_error "Es_client.decode_hit: not an object")
+          )
 
   let default_sort = [ "_score", { order = `Desc; ignore_unmapped = None } ]
 
@@ -399,22 +415,21 @@ struct
     in
     let body = Es_client_j.string_of_query_request q in
     let uri = make_mapping_uri ?qid ~indexes ~mappings "_search" in
-    Http_client.post uri ~body
-    >>= function
-      | Some (status, headers, res)->
-        return (Some (Es_client_j.search_result_of_string decode_hit res))
-      | None ->
-        return None
+    Http_client.post uri ~body >>= fun opt_resp ->
+    check_generic_result opt_resp >>= fun http_resp ->
+    let result =
+      read_body (Es_client_j.search_result_of_string decode_hit) http_resp
+    in
+    return result
 
   let count ~indexes ~mappings ?qid query =
     let query = Es_query.to_json_ast ~cst_score:false query in
     let body = Yojson.Basic.to_string query in
     let uri = make_mapping_uri ?qid ~indexes ~mappings "_count" in
-    Http_client.post uri ~body
-    >>= function
-      | Some (status, headers, res)->
-        return (Some (Es_client_j.search_result_of_string decode_hit res))
-      | None ->
-        return None
-
+    Http_client.post uri ~body >>= fun opt_resp ->
+    check_generic_result opt_resp >>= fun http_resp ->
+    let search_result =
+      read_body (Es_client_j.search_result_of_string decode_hit) http_resp
+    in
+    return search_result.sr_count
 end

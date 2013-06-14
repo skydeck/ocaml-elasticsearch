@@ -1,38 +1,29 @@
-# OASIS_START
-# DO NOT EDIT (digest: bc1e05bfc8b39b664f29dae8dbd3ebbb)
+.PHONY: default all byte opt test install reinstall uninstall clean
 
-SETUP = ocaml setup.ml
+default:
+	$(MAKE) -C elasticsearch
 
-build: setup.data
-	$(SETUP) -build $(BUILDFLAGS)
+all:
+	$(MAKE) -C elasticsearch all
 
-doc: setup.data build
-	$(SETUP) -doc $(DOCFLAGS)
+byte:
+	$(MAKE) -C elasticsearch byte
 
-test: setup.data build
-	$(SETUP) -test $(TESTFLAGS)
+opt:
+	$(MAKE) -C elasticsearch opt
 
-all: 
-	$(SETUP) -all $(ALLFLAGS)
+test: opt
+	$(MAKE) -C test
 
-install: setup.data
-	$(SETUP) -install $(INSTALLFLAGS)
+install:
+	$(MAKE) -C elasticsearch install
 
-uninstall: setup.data
-	$(SETUP) -uninstall $(UNINSTALLFLAGS)
+reinstall:
+	$(MAKE) -C elasticsearch reinstall
 
-reinstall: setup.data
-	$(SETUP) -reinstall $(REINSTALLFLAGS)
+uninstall:
+	$(MAKE) -C elasticsearch uninstall
 
-clean: 
-	$(SETUP) -clean $(CLEANFLAGS)
-
-distclean: 
-	$(SETUP) -distclean $(DISTCLEANFLAGS)
-
-setup.data:
-	$(SETUP) -configure $(CONFIGUREFLAGS)
-
-.PHONY: build doc test all install uninstall reinstall clean distclean configure
-
-# OASIS_STOP
+clean:
+	$(MAKE) -C elasticsearch clean
+	$(MAKE) -C test clean
