@@ -26,14 +26,14 @@ OCAML_FILES = \
   es_client.mli es_client.ml
 
 elasticsearch.cma: $(OCAML_FILES)
-	ocamlfind ocamlc -a -o $@ -g -annot \
-          $(OCAML_FILES) \
-          -package "$(PACKAGES)" -linkpkg
+	ocamlfind ocamlc -a -g -annot -o $@ \
+          -package "$(PACKAGES)" \
+          $(OCAML_FILES)
 
 elasticsearch.cmxa: $(OCAML_FILES)
-	ocamlfind opt -o $@ -g -annot \
-          $(OCAML_FILES) \
-          -package "$(PACKAGES)" -linkpkg
+	ocamlfind ocamlopt -a -g -annot -o $@ \
+          -package "$(PACKAGES)" \
+          $(OCAML_FILES)
 
 install:
 	ocamlfind install elasticsearch META \

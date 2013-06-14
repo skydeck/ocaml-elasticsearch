@@ -13,7 +13,7 @@ opt:
 	$(MAKE) -C elasticsearch opt
 
 test: opt
-	$(MAKE) -C test test
+	$(MAKE) -C test
 
 install:
 	$(MAKE) -C elasticsearch install

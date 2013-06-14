@@ -1,3 +1,8 @@
+.PHONY: default test
+default: test
+test: elastictest
+	./elastictest
+
 PACKAGES = cohttp.lwt elasticsearch
 
 ATDGEN_SOURCES = test_mapping.atd
@@ -11,12 +16,11 @@ OCAML_FILES = \
   test_util.ml \
   elastictest.ml
 
-.PHONY: default
-default: elastictest
 elastictest: $(OCAML_FILES)
 	OCAMLPATH=..:$(OCAMLPATH) ocamlfind opt -o $@ -g -annot \
           $(OCAML_FILES) \
           -package "$(PACKAGES)" -linkpkg
+
 
 .PHONY: clean
 clean:
