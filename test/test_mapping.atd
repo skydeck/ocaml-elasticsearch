@@ -1,0 +1,23 @@
+type text <ocaml from="Es_field_types"> = abstract
+type token <ocaml from="Es_field_types"> = abstract
+type binary <ocaml from="Es_field_types"> = abstract
+type byte <ocaml from="Es_field_types"> = abstract
+type coord <ocaml from="Es_field_types"> = abstract
+type date <ocaml from="Es_field_types"> = abstract
+
+type full_location = {
+  coord : coord;
+  loc_name : text;
+}
+
+type doc = {
+  ~lucky_numbers : int list;
+  id : token;
+  username : token;
+  ?name : text option;
+  ?gender : byte option;
+  location : coord;
+  ~locations : full_location list;
+  ?dob : date option;
+  ?blob : binary option;
+}
